@@ -49,9 +49,8 @@
     <CodeAnalysisRuleSet>ManagedMinimumRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="HPMSdkManaged_4_5.x86, Version=1.0.4856.28088, Culture=neutral, PublicKeyToken=b6b6ff16a70279a6, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\HansoftSDK_7_105\Win32\HPMSdkManaged_4_5.x86.dll</HintPath>
+    <Reference Include="HPMSdkManaged_4_5.x86">
+      <HintPath>..\HansoftSDK\Win32\HPMSdkManaged_4_5.x86.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
