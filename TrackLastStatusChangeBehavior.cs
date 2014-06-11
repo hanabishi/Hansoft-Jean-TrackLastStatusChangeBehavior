@@ -116,8 +116,6 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
 
             if (dateSaverValue.ToDateTime().ToLocalTime().CompareTo(task.LastUpdated.ToLocalTime()) < 0)
             {
-                Console.WriteLine(dateSaverValue.ToDateTime().ToLocalTime() + ", " + task.LastUpdated.ToLocalTime());
-                
                 HPMDataHistoryGetHistoryParameters pars = new HPMDataHistoryGetHistoryParameters();
                 HPMProjectCustomColumnsColumn actualCustomColumn = task.ProjectView.GetCustomColumn(trackingColumn.m_Name);
                 DateTimeValue storedValue = (DateTimeValue)task.GetCustomColumnValue(actualCustomColumn);
