@@ -103,15 +103,21 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
             }
         }
 
-        private void DoUpdateFromHistory(Task task)
+        private static HPMProjectCustomColumnsColumn GetCustomColumn(Task task)
         {
             HPMProjectCustomColumnsColumn dateSaver = task.ProjectView.GetCustomColumn("Last Status Check");
+            return dateSaver;
+        }
+
+        private void DoUpdateFromHistory(Task task)
+        {
+            HPMProjectCustomColumnsColumn dateSaver = GetCustomColumn(task);
             DateTimeValue dateSaverValue = (DateTimeValue)task.GetCustomColumnValue(dateSaver);
 
-            if (dateSaverValue.CompareTo(task.LastUpdated) < 0)
+            if (dateSaverValue.ToDateTime().ToLocalTime().CompareTo(task.LastUpdated.ToLocalTime()) < 0)
             {
-                Console.WriteLine("UPDATE " + task.Name);
-                task.SetCustomColumnValue(dateSaver, DateTime.Now);
+                Console.WriteLine(dateSaverValue.ToDateTime().ToLocalTime() + ", " + task.LastUpdated.ToLocalTime());
+                
                 HPMDataHistoryGetHistoryParameters pars = new HPMDataHistoryGetHistoryParameters();
                 HPMProjectCustomColumnsColumn actualCustomColumn = task.ProjectView.GetCustomColumn(trackingColumn.m_Name);
                 DateTimeValue storedValue = (DateTimeValue)task.GetCustomColumnValue(actualCustomColumn);
@@ -125,6 +131,7 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
                 HPMDataHistory history = SessionManager.Session.DataHistoryGetHistory(pars);
                 if (history != null)
                     DoUpdateFromHistory(task, history);
+                task.SetCustomColumnValue(dateSaver, DateTime.Now.AddSeconds(5));
             }
         }
 
@@ -161,10 +168,10 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
                     Task task = Task.GetTask(e.Data.m_TaskID);
                     if (projects.Contains(task.Project) && projectViews.Contains(task.ProjectView))
                     {
-                        HPMProjectCustomColumnsColumn dateSaver = task.ProjectView.GetCustomColumn("Last Status Check");
+                        HPMProjectCustomColumnsColumn dateSaver = GetCustomColumn(task);
                         DateTimeValue dateSaverValue = (DateTimeValue)task.GetCustomColumnValue(dateSaver);
                         task.SetCustomColumnValue(trackingColumn, DateTimeValue.FromHpmDateTime(task, trackingColumn, HPMUtilities.HPMNow()));
-                        task.SetCustomColumnValue(dateSaver, DateTime.Now);
+                        task.SetCustomColumnValue(dateSaver, DateTime.Now.AddSeconds(5));
                     }
                 }
             }
@@ -177,8 +184,6 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
                 if (SessionManager.Session.UtilIsIDTask(e.Data.m_UniqueIdentifier) || SessionManager.Session.UtilIsIDTaskRef(e.Data.m_UniqueIdentifier))
                 {
                     Task task = Task.GetTask(e.Data.m_UniqueIdentifier);
-                    HPMProjectCustomColumnsColumn dateSaver = task.ProjectView.GetCustomColumn("Last Status Check");
-                    DateTimeValue dateSaverValue = (DateTimeValue)task.GetCustomColumnValue(dateSaver);
                     DoUpdateFromHistory(task);
                 }
             }
