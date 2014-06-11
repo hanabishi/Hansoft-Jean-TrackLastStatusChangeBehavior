@@ -14,6 +14,7 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
 {
     public class TrackLastStatusChangeBehavior : AbstractBehavior
     {
+        public static bool debug = false;
         string projectName;
         bool initializationOK = false;
         string trackingColumnName;
@@ -113,9 +114,16 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
         {
             HPMProjectCustomColumnsColumn dateSaver = GetCustomColumn(task);
             DateTimeValue dateSaverValue = (DateTimeValue)task.GetCustomColumnValue(dateSaver);
-
+            if (debug)
+            {
+                Console.WriteLine("+" + task.Name);
+            }
             if (dateSaverValue.ToDateTime().ToLocalTime().CompareTo(task.LastUpdated.ToLocalTime()) < 0)
             {
+                if (debug)
+                {
+                    Console.WriteLine(dateSaverValue.ToDateTime().ToLocalTime() + ", " + task.LastUpdated.ToLocalTime());
+                }
                 HPMDataHistoryGetHistoryParameters pars = new HPMDataHistoryGetHistoryParameters();
                 HPMProjectCustomColumnsColumn actualCustomColumn = task.ProjectView.GetCustomColumn(trackingColumn.m_Name);
                 DateTimeValue storedValue = (DateTimeValue)task.GetCustomColumnValue(actualCustomColumn);
