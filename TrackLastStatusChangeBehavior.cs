@@ -104,26 +104,49 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
             }
         }
 
-        private static HPMProjectCustomColumnsColumn GetCustomColumn(Task task)
+        private static HPMSDKInternalData GetCustomColumn(Task task)
         {
-            HPMProjectCustomColumnsColumn dateSaver = task.ProjectView.GetCustomColumn("Last Status Check");
-            return dateSaver;
+            HPMSDKInternalData hid = null;
+            try
+            {
+                hid = SessionManager.Session.TaskGetSDKInternalData(task.UniqueTaskID, "LastStatusUpdated");
+            }
+            catch (HPMSdkException e)
+            {
+                hid = new HPMSDKInternalData();
+                hid.m_Data = BitConverter.GetBytes(0);
+            }
+            if (hid == null)
+            {
+                hid = new HPMSDKInternalData();
+                hid.m_Data = BitConverter.GetBytes(0);
+            }
+            return hid;
+        }
+        public static void writeHIDStatus(Task task)
+        {
+            HPMSDKInternalData hid = new HPMSDKInternalData();
+            hid.m_Data = BitConverter.GetBytes(DateTime.Now.AddSeconds(5).ToLocalTime().Ticks);
+            try
+            {
+                SessionManager.Session.TaskSetSDKInternalData(task.UniqueTaskID, "LastStatusUpdated", hid);
+            }
+            catch (HPMSdkException ee)
+            {
+                Console.WriteLine(ee.Message);
+            }
         }
 
         private void DoUpdateFromHistory(Task task)
         {
-            HPMProjectCustomColumnsColumn dateSaver = GetCustomColumn(task);
-            DateTimeValue dateSaverValue = (DateTimeValue)task.GetCustomColumnValue(dateSaver);
             if (debug)
             {
                 Console.WriteLine("+" + task.Name);
             }
-            if (dateSaverValue.ToDateTime().ToLocalTime().CompareTo(task.LastUpdated.ToLocalTime()) < 0)
+
+            HPMSDKInternalData hid = GetCustomColumn(task);
+            if (BitConverter.ToInt32(hid.m_Data, 0) < task.LastUpdated.ToLocalTime().Ticks)
             {
-                if (debug)
-                {
-                    Console.WriteLine(dateSaverValue.ToDateTime().ToLocalTime() + ", " + task.LastUpdated.ToLocalTime());
-                }
                 HPMDataHistoryGetHistoryParameters pars = new HPMDataHistoryGetHistoryParameters();
                 HPMProjectCustomColumnsColumn actualCustomColumn = task.ProjectView.GetCustomColumn(trackingColumn.m_Name);
                 DateTimeValue storedValue = (DateTimeValue)task.GetCustomColumnValue(actualCustomColumn);
@@ -137,7 +160,7 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
                 HPMDataHistory history = SessionManager.Session.DataHistoryGetHistory(pars);
                 if (history != null)
                     DoUpdateFromHistory(task, history);
-                task.SetCustomColumnValue(dateSaver, DateTime.Now.AddSeconds(5));
+                writeHIDStatus(task);
             }
         }
 
@@ -174,10 +197,9 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
                     Task task = Task.GetTask(e.Data.m_TaskID);
                     if (projects.Contains(task.Project) && projectViews.Contains(task.ProjectView))
                     {
-                        HPMProjectCustomColumnsColumn dateSaver = GetCustomColumn(task);
-                        DateTimeValue dateSaverValue = (DateTimeValue)task.GetCustomColumnValue(dateSaver);
+                        HPMSDKInternalData hid = GetCustomColumn(task);
                         task.SetCustomColumnValue(trackingColumn, DateTimeValue.FromHpmDateTime(task, trackingColumn, HPMUtilities.HPMNow()));
-                        task.SetCustomColumnValue(dateSaver, DateTime.Now.AddSeconds(5));
+                        writeHIDStatus(task);
                     }
                 }
             }
