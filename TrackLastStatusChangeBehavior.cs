@@ -145,11 +145,10 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
             }
 
             HPMSDKInternalData hid = GetCustomColumn(task);
-            if (BitConverter.ToInt32(hid.m_Data, 0) < task.LastUpdated.ToLocalTime().Ticks)
+
+            if ((hid.m_Data != null) && hid.m_Data.Length > 1 && BitConverter.ToInt32(hid.m_Data, 0) < task.LastUpdated.ToLocalTime().Ticks)
             {
                 HPMDataHistoryGetHistoryParameters pars = new HPMDataHistoryGetHistoryParameters();
-                HPMProjectCustomColumnsColumn actualCustomColumn = task.ProjectView.GetCustomColumn(trackingColumn.m_Name);
-                DateTimeValue storedValue = (DateTimeValue)task.GetCustomColumnValue(actualCustomColumn);
 
                 pars.m_DataID = task.UniqueTaskID;
                 pars.m_FieldID = EHPMStatisticsField.NoStatistics;
@@ -160,6 +159,11 @@ namespace Hansoft.Jean.Behavior.TrackLastStatusChangeBehavior
                 HPMDataHistory history = SessionManager.Session.DataHistoryGetHistory(pars);
                 if (history != null)
                     DoUpdateFromHistory(task, history);
+                writeHIDStatus(task);
+            }
+            else if (hid.m_Data == null) {
+                writeHIDStatus(task);
+            }else if (hid.m_Data.Length <= 1){
                 writeHIDStatus(task);
             }
         }
